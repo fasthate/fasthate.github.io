@@ -8,20 +8,15 @@
 
     // ===== DOM Elements =====
     const elements = {
-        preloader: document.getElementById('preloader'),
-        progressBar: document.getElementById('progressBar'),
         header: document.getElementById('header'),
         hamburger: document.getElementById('hamburger'),
         nav: document.getElementById('nav'),
         sections: document.querySelectorAll('.section'),
         navLinks: document.querySelectorAll('.nav-link[data-section]'),
-        scrollTop: document.getElementById('scrollTop'),
         
-        // Watched section
+        // Watched scroll containers
         seriesScroll: document.getElementById('seriesScroll'),
         moviesScroll: document.getElementById('moviesScroll'),
-        filterBtns: document.querySelectorAll('.filter-btn'),
-        watchedCategories: document.querySelectorAll('.watched-category'),
         
         // Discord & Toast
         discordBtn: document.getElementById('discordBtn'),
@@ -42,88 +37,14 @@
         setupIntersectionObserver();
         setupSmoothScroll();
         setupDragScroll();
-        setupProgressBar();
-        setupScrollToTop();
-        setupFilter();
-    }
-
-    // ===== Preloader =====
-    function setupPreloader() {
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (elements.preloader) {
-                    elements.preloader.classList.add('hidden');
-                }
-            }, 500);
-        });
-    }
-
-    // ===== Progress Bar =====
-    function setupProgressBar() {
-        window.addEventListener('scroll', () => {
-            if (elements.progressBar) {
-                const scrollTop = window.scrollY;
-                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-                const scrollPercent = (scrollTop / docHeight) * 100;
-                elements.progressBar.style.width = scrollPercent + '%';
-            }
-        });
-    }
-
-    // ===== Scroll to Top Button =====
-    function setupScrollToTop() {
-        window.addEventListener('scroll', () => {
-            if (elements.scrollTop) {
-                if (window.scrollY > 500) {
-                    elements.scrollTop.classList.add('visible');
-                } else {
-                    elements.scrollTop.classList.remove('visible');
-                }
-            }
-        });
-
-        if (elements.scrollTop) {
-            elements.scrollTop.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-        }
-    }
-
-    // ===== Filter Buttons =====
-    function setupFilter() {
-        elements.filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filter = btn.dataset.filter;
-
-                // Update active button
-                elements.filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                // Show/hide categories
-                elements.watchedCategories.forEach(category => {
-                    const categoryType = category.dataset.category;
-                    
-                    if (filter === 'all') {
-                        category.classList.remove('hidden');
-                    } else if (categoryType === filter) {
-                        category.classList.remove('hidden');
-                    } else {
-                        category.classList.add('hidden');
-                    }
-                });
-            });
-        });
+        setupScrollProgress();
+        setupWatchedControls();
     }
 
     // ===== Event Listeners =====
     function setupEventListeners() {
         // Hamburger menu
-        if (elements.hamburger) {
-            elements.hamburger.addEventListener('click', toggleMenu);
-        }
+        elements.hamburger.addEventListener('click', toggleMenu);
 
         // Close menu when clicking nav links
         elements.navLinks.forEach(link => {
@@ -137,16 +58,14 @@
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             if (state.isMenuOpen && 
-                elements.nav && !elements.nav.contains(e.target) && 
-                elements.hamburger && !elements.hamburger.contains(e.target)) {
+                !elements.nav.contains(e.target) && 
+                !elements.hamburger.contains(e.target)) {
                 toggleMenu();
             }
         });
 
         // Discord copy
-        if (elements.discordBtn) {
-            elements.discordBtn.addEventListener('click', copyDiscord);
-        }
+        elements.discordBtn.addEventListener('click', copyDiscord);
 
         // Keyboard navigation
         document.addEventListener('keydown', handleKeyboard);
@@ -155,7 +74,7 @@
         window.addEventListener('scroll', handleScroll);
     }
 
-    // ===== Drag Scroll for Watched Section =====
+    // ===== Drag Scroll for Watched Section (scrollLeft implementation) =====
     function setupDragScroll() {
         const scrollContainers = [elements.seriesScroll, elements.moviesScroll];
         
@@ -172,7 +91,7 @@
             // Mouse Events
             container.addEventListener('mousedown', (e) => {
                 isDown = true;
-                container.classList.add('active');
+                container.classList.add('active'); // Adds cursor: grabbing
                 startX = e.pageX - container.offsetLeft;
                 scrollLeft = container.scrollLeft;
                 lastPageX = e.pageX;
@@ -198,9 +117,10 @@
                 e.preventDefault();
                 
                 const x = e.pageX - container.offsetLeft;
-                const walk = (x - startX) * 1.5;
+                const walk = (x - startX) * 1.5; // Scroll speed multiplier
                 container.scrollLeft = scrollLeft - walk;
                 
+                // Calculate velocity for momentum
                 velX = e.pageX - lastPageX;
                 lastPageX = e.pageX;
             });
@@ -218,8 +138,8 @@
             }
             
             function momentumLoop() {
-                container.scrollLeft -= velX * 1.5;
-                velX *= 0.95;
+                container.scrollLeft -= velX * 1.5; // Apply velocity
+                velX *= 0.95; // Friction
                 
                 if (Math.abs(velX) > 0.5) {
                     momentumID = requestAnimationFrame(momentumLoop);
@@ -230,13 +150,12 @@
 
     // ===== Hamburger Menu =====
     function toggleMenu() {
-        if (!elements.hamburger || !elements.nav) return;
-        
         state.isMenuOpen = !state.isMenuOpen;
         elements.hamburger.classList.toggle('active', state.isMenuOpen);
         elements.nav.classList.toggle('active', state.isMenuOpen);
         elements.hamburger.setAttribute('aria-expanded', state.isMenuOpen);
         
+        // Prevent body scroll when menu is open
         document.body.style.overflow = state.isMenuOpen ? 'hidden' : '';
     }
 
@@ -275,6 +194,7 @@
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                     
+                    // Update active nav link
                     const sectionId = entry.target.id;
                     updateActiveNavLink(sectionId);
                 }
@@ -301,6 +221,7 @@
             await navigator.clipboard.writeText(discordUsername);
             showToast('Discord скопирован: fasthate');
         } catch (err) {
+            // Fallback for older browsers
             const textArea = document.createElement('textarea');
             textArea.value = discordUsername;
             textArea.style.position = 'fixed';
@@ -322,7 +243,7 @@
 
     // ===== Toast Notification =====
     function showToast(message, duration = 3000) {
-        if (elements.toast && elements.toastMessage) {
+        if (elements.toastMessage) {
             elements.toastMessage.textContent = message;
             elements.toast.classList.add('active');
 
@@ -334,6 +255,7 @@
 
     // ===== Keyboard Navigation =====
     function handleKeyboard(e) {
+        // Close menu on Escape
         if (e.key === 'Escape') {
             if (state.isMenuOpen) {
                 toggleMenu();
@@ -345,6 +267,7 @@
     function handleScroll() {
         const scrollY = window.scrollY;
         
+        // Header background opacity
         if (elements.header) {
             if (scrollY > 100) {
                 elements.header.style.background = 'rgba(0, 0, 0, 0.95)';
@@ -352,6 +275,84 @@
                 elements.header.style.background = 'rgba(0, 0, 0, 0.9)';
             }
         }
+    }
+
+    // ===== Preloader =====
+    function setupPreloader() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    preloader.classList.add('hidden');
+                }, 500);
+            });
+        }
+    }
+
+    // ===== Scroll Progress Bar =====
+    function setupScrollProgress() {
+        const progressBar = document.getElementById('scrollProgress');
+        if (!progressBar) return;
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = (scrollTop / scrollHeight) * 100;
+            progressBar.style.width = scrollPercent + '%';
+        });
+    }
+
+    // ===== Watched Controls =====
+    function setupWatchedControls() {
+        const searchInput = document.getElementById('searchInput');
+        const cards = document.querySelectorAll('.watched-card');
+
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                cards.forEach(card => {
+                    const title = card.querySelector('.watched-title').textContent.toLowerCase();
+                    if (title.includes(searchTerm)) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        // Setup star ratings
+        setupStarRatings();
+    }
+
+    // ===== Star Ratings =====
+    function setupStarRatings() {
+        const starsContainers = document.querySelectorAll('.stars');
+        
+        starsContainers.forEach(container => {
+            const rating = parseFloat(container.dataset.rating) || 0;
+            const totalStars = 10; // Максимальный рейтинг 10/10
+            
+            for (let i = 1; i <= totalStars; i++) {
+                const star = document.createElement('span');
+                star.className = 'star';
+                
+                // Рассчитываем заполнение звезды (для рейтингов типа 8.6/10)
+                const starFill = Math.min(Math.max((rating / 10) * 5, 0), 5); // Конвертируем в 5-звездную систему
+                const starPosition = i / 2; // Позиция звезды (0.5, 1, 1.5, 2, 2.5)
+                
+                if (starPosition <= starFill) {
+                    star.classList.add('filled');
+                    // Для частично заполненных звезд
+                    if (starPosition > starFill && starPosition - 0.5 <= starFill) {
+                        star.classList.add('half-filled');
+                    }
+                }
+                
+                container.appendChild(star);
+            }
+        });
     }
 
     // ===== Initialize when DOM is ready =====
