@@ -176,30 +176,20 @@
             <h2 class="section-title">Смотрел</h2>
             <p class="section-subtitle">Фильмы и сериалы, которые я посмотрел</p>
             
-            <!-- Фильтр -->
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">Все</button>
-                <button class="filter-btn" data-filter="series">Сериалы</button>
-                <button class="filter-btn" data-filter="movie">Фильмы</button>
-            </div>
+        <!-- Search -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Поиск по названию..." autocomplete="off">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </div>
             
             <!-- ===================== СЕРИАЛЫ ===================== -->
             <div class="watched-category" data-category="series">
                 <h3 class="category-title">Сериалы</h3>
                 <div class="watched-scroll" id="seriesScroll">
                     <div class="watched-track">
-                        
-                        <!-- 
-                        ╔═══════════════════════════════════════════════════════════════╗
-                        ║  КАК ДОБАВИТЬ НОВЫЙ СЕРИАЛ:                                   ║
-                        ║  1. Скопируйте блок <article class="watched-card">...</article>║
-                        ║  2. Вставьте перед комментарием "КОНЕЦ СПИСКА СЕРИАЛОВ"       ║
-                        ║  3. Измените: постер, название, даты, рейтинг, жанры          ║
-                        ║                                                               ║
-                        ║  Постеры можно брать с сайта themoviedb.org                   ║
-                        ║  Рейтинги — с IMDb или Кинопоиска                             ║
-                        ╚═══════════════════════════════════════════════════════════════╝
-                        -->
                         
                         <article class="watched-card" data-type="series">
                             <div class="watched-poster">
