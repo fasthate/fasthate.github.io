@@ -150,10 +150,28 @@
         elements.searchInput.addEventListener('input', () => {
             const query = elements.searchInput.value.toLowerCase().trim();
             
+            let hasMatches = false;
+            
             cards.forEach(card => {
                 const title = card.querySelector('.watched-title').textContent.toLowerCase();
-                card.style.display = title.includes(query) ? 'flex' : 'none';
+                
+                if (title.includes(query)) {
+                    card.style.display = '';  // Показываем (возвращаем дефолтный display)
+                    hasMatches = true;
+                } else {
+                    card.style.display = 'none';  // Скрываем
+                }
             });
+            
+            // Опционально: можно добавить сообщение "Ничего не найдено", но пока не стал
+        });
+        
+        // Дополнительно: очистка при фокусе или Esc (необязательно, но удобно)
+        elements.searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                elements.searchInput.value = '';
+                cards.forEach(card => card.style.display = '');
+            }
         });
     }
             
