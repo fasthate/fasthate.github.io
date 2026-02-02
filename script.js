@@ -17,11 +17,9 @@
         navLinks: document.querySelectorAll('.nav-link[data-section]'),
         scrollTop: document.getElementById('scrollTop'),
         
-        // Watched section
-        seriesScroll: document.getElementById('seriesScroll'),
-        moviesScroll: document.getElementById('moviesScroll'),
-        filterBtns: document.querySelectorAll('.filter-btn'),
-        watchedCategories: document.querySelectorAll('.watched-category'),
+        // Watched section (new search version)
+        searchInput: document.getElementById('searchInput'),
+        watchedScroll: document.getElementById('watchedScroll'),
         
         // Discord & Toast
         discordBtn: document.getElementById('discordBtn'),
@@ -44,7 +42,7 @@
         setupDragScroll();
         setupProgressBar();
         setupScrollToTop();
-        setupFilter();
+        setupSearch();
     }
 
     // ===== Preloader =====
@@ -92,32 +90,6 @@
         }
     }
 
-    // ===== Filter Buttons =====
-    function setupFilter() {
-        elements.filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filter = btn.dataset.filter;
-
-                // Update active button
-                elements.filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                // Show/hide categories
-                elements.watchedCategories.forEach(category => {
-                    const categoryType = category.dataset.category;
-                    
-                    if (filter === 'all') {
-                        category.classList.remove('hidden');
-                    } else if (categoryType === filter) {
-                        category.classList.remove('hidden');
-                    } else {
-                        category.classList.add('hidden');
-                    }
-                });
-            });
-        });
-    }
-
     // ===== Event Listeners =====
     function setupEventListeners() {
         // Hamburger menu
@@ -157,7 +129,7 @@
 
     // ===== Drag Scroll for Watched Section =====
     function setupDragScroll() {
-        const scrollContainers = [elements.seriesScroll, elements.moviesScroll];
+        const scrollContainers = [elements.watchedScroll];
         
         scrollContainers.forEach(container => {
             if (!container) return;
@@ -168,6 +140,22 @@
             let velX = 0;
             let momentumID;
             let lastPageX;
+
+    // ===== Search =====
+    function setupSearch() {
+        if (!elements.searchInput || !elements.watchedScroll) return;
+        
+        const cards = elements.watchedScroll.querySelectorAll('.watched-card');
+        
+        elements.searchInput.addEventListener('input', () => {
+            const query = elements.searchInput.value.toLowerCase().trim();
+            
+            cards.forEach(card => {
+                const title = card.querySelector('.watched-title').textContent.toLowerCase();
+                card.style.display = title.includes(query) ? 'flex' : 'none';
+            });
+        });
+    }
             
             // Mouse Events
             container.addEventListener('mousedown', (e) => {
