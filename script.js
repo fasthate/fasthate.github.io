@@ -17,9 +17,11 @@
         navLinks: document.querySelectorAll('.nav-link[data-section]'),
         scrollTop: document.getElementById('scrollTop'),
         
-        // Watched section (new search version)
-        searchInput: document.getElementById('searchInput'),
-        watchedScroll: document.getElementById('watchedScroll'),
+        // Watched section
+        seriesScroll: document.getElementById('seriesScroll'),
+        moviesScroll: document.getElementById('moviesScroll'),
+        filterBtns: document.querySelectorAll('.filter-btn'),
+        watchedCategories: document.querySelectorAll('.watched-category'),
         
         // Discord & Toast
         discordBtn: document.getElementById('discordBtn'),
@@ -42,7 +44,7 @@
         setupDragScroll();
         setupProgressBar();
         setupScrollToTop();
-        setupSearch();
+        setupFilter();
     }
 
     // ===== Preloader =====
@@ -90,6 +92,32 @@
         }
     }
 
+    // ===== Filter Buttons =====
+    function setupFilter() {
+        elements.filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+
+                // Update active button
+                elements.filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Show/hide categories
+                elements.watchedCategories.forEach(category => {
+                    const categoryType = category.dataset.category;
+                    
+                    if (filter === 'all') {
+                        category.classList.remove('hidden');
+                    } else if (categoryType === filter) {
+                        category.classList.remove('hidden');
+                    } else {
+                        category.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    }
+
     // ===== Event Listeners =====
     function setupEventListeners() {
         // Hamburger menu
@@ -129,7 +157,7 @@
 
     // ===== Drag Scroll for Watched Section =====
     function setupDragScroll() {
-        const scrollContainers = [elements.watchedScroll];
+        const scrollContainers = [elements.seriesScroll, elements.moviesScroll];
         
         scrollContainers.forEach(container => {
             if (!container) return;
@@ -140,40 +168,6 @@
             let velX = 0;
             let momentumID;
             let lastPageX;
-
-    // ===== Search =====
-    function setupSearch() {
-        if (!elements.searchInput || !elements.watchedScroll) return;
-        
-        const cards = elements.watchedScroll.querySelectorAll('.watched-card');
-        
-        elements.searchInput.addEventListener('input', () => {
-            const query = elements.searchInput.value.toLowerCase().trim();
-            
-            let hasMatches = false;
-            
-            cards.forEach(card => {
-                const title = card.querySelector('.watched-title').textContent.toLowerCase();
-                
-                if (title.includes(query)) {
-                    card.style.display = '';  // Показываем (возвращаем дефолтный display)
-                    hasMatches = true;
-                } else {
-                    card.style.display = 'none';  // Скрываем
-                }
-            });
-            
-            // Опционально: можно добавить сообщение "Ничего не найдено", но пока не стал
-        });
-        
-        // Дополнительно: очистка при фокусе или Esc (необязательно, но удобно)
-        elements.searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                elements.searchInput.value = '';
-                cards.forEach(card => card.style.display = '');
-            }
-        });
-    }
             
             // Mouse Events
             container.addEventListener('mousedown', (e) => {
