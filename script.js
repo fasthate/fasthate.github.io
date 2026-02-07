@@ -10,7 +10,6 @@
     // DOM Elements
     // ========================================
     const elements = {
-        pageLoader: document.getElementById('pageLoader'),
         hamburger: document.getElementById('hamburger'),
         nav: document.getElementById('nav'),
         discordCopy: document.getElementById('discordCopy'),
@@ -23,37 +22,9 @@
     // Initialize
     // ========================================
     function init() {
-        hideLoader();
         setupEventListeners();
         setupIntersectionObserver();
         setupSmoothScroll();
-        animateMainContent();
-    }
-
-    // ========================================
-    // Page Loader
-    // ========================================
-    function hideLoader() {
-        // Wait for animations to complete
-        setTimeout(() => {
-            if (elements.pageLoader) {
-                elements.pageLoader.classList.add('hidden');
-            }
-        }, 1800);
-    }
-
-    // ========================================
-    // Animate Main Content
-    // ========================================
-    function animateMainContent() {
-        const scrollIndicator = document.querySelector('.scroll-indicator');
-        
-        // Animate scroll indicator after loader
-        setTimeout(() => {
-            if (scrollIndicator) {
-                scrollIndicator.classList.add('animated');
-            }
-        }, 2500);
     }
 
     // ========================================
@@ -171,25 +142,31 @@
     function setupIntersectionObserver() {
         const observerOptions = {
             root: null,
-            rootMargin: '0px',
-            threshold: 0.15
+            rootMargin: '-50px',
+            threshold: 0.1
         };
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
-                    // Once visible, stop observing
-                    observer.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
-        // Only observe About section (main section uses CSS animations)
-        const aboutSection = document.getElementById('about');
-        if (aboutSection) {
-            observer.observe(aboutSection);
-        }
+        elements.sections.forEach(section => {
+            observer.observe(section);
+        });
+
+        // Initially make sections visible if they're in viewport
+        setTimeout(() => {
+            elements.sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    section.classList.add('visible');
+                }
+            });
+        }, 100);
     }
 
     // ========================================
@@ -234,31 +211,23 @@
     // ========================================
     // Handle Active Navigation State
     // ========================================
-    const aboutSection = document.getElementById('about');
-    const aboutNavLink = document.querySelector('.nav-link[data-section="about"]');
-    
     function updateActiveNav() {
-        if (!aboutSection || !aboutNavLink) return;
-        
-        const scrollPosition = window.scrollY;
-        const windowHeight = window.innerHeight;
-        const sectionTop = aboutSection.offsetTop;
-        const sectionHeight = aboutSection.offsetHeight;
-        const headerHeight = 70;
-        
-        // Check if we're in the About section
-        const isInAboutSection = scrollPosition + headerHeight >= sectionTop - 100 && 
-                                  scrollPosition < sectionTop + sectionHeight - 100;
-        
-        if (isInAboutSection) {
-            if (!aboutNavLink.classList.contains('active')) {
-                aboutNavLink.classList.add('active');
+        const scrollPosition = window.scrollY + 100;
+
+        elements.sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            const sectionId = section.getAttribute('id');
+
+            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                elements.navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${sectionId}`) {
+                        link.classList.add('active');
+                    }
+                });
             }
-        } else {
-            if (aboutNavLink.classList.contains('active')) {
-                aboutNavLink.classList.remove('active');
-            }
-        }
+        });
     }
 
     // Throttle scroll event
@@ -269,14 +238,6 @@
         }
         scrollTimeout = window.requestAnimationFrame(updateActiveNav);
     });
-    
-    // Handle click on About link
-    if (aboutNavLink) {
-        aboutNavLink.addEventListener('click', () => {
-            // Add active class immediately on click
-            aboutNavLink.classList.add('active');
-        });
-    }
 
     // ========================================
     // Initialize on DOM Ready
