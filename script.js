@@ -1,148 +1,188 @@
 /**
- * fasthate - Personal Website Script
- * Pure vanilla JavaScript functionality
+ * fasthate - Official Website
+ * JavaScript functionality
  */
 
 (function() {
     'use strict';
 
-    // ========================================
-    // DOM Elements
-    // ========================================
+    // ===== DOM Elements =====
     const elements = {
+        header: document.getElementById('header'),
         hamburger: document.getElementById('hamburger'),
         nav: document.getElementById('nav'),
-        discordCopy: document.getElementById('discordCopy'),
-        toast: document.getElementById('toast'),
         sections: document.querySelectorAll('.section'),
-        navLinks: document.querySelectorAll('.nav-link[href^="#"]')
+        navLinks: document.querySelectorAll('.nav-link[data-section]'),
+        
+        // Watched scroll containers
+        seriesScroll: document.getElementById('seriesScroll'),
+        moviesScroll: document.getElementById('moviesScroll'),
+        
+        // Discord & Toast
+        discordBtn: document.getElementById('discordBtn'),
+        toast: document.getElementById('toast'),
+        toastMessage: document.getElementById('toastMessage')
     };
 
-    // ========================================
-    // Initialize
-    // ========================================
+    // ===== State =====
+    const state = {
+        isMenuOpen: false,
+        isDragging: false
+    };
+
+    // ===== Initialize =====
     function init() {
         setupEventListeners();
         setupIntersectionObserver();
         setupSmoothScroll();
+        setupDragScroll();
     }
 
-    // ========================================
-    // Setup Event Listeners
-    // ========================================
+    // ===== Event Listeners =====
     function setupEventListeners() {
-        // Hamburger Menu
-        if (elements.hamburger) {
-            elements.hamburger.addEventListener('click', toggleMobileMenu);
-        }
+        // Hamburger menu
+        elements.hamburger.addEventListener('click', toggleMenu);
 
-        // Close mobile menu when clicking nav links
+        // Close menu when clicking nav links
         elements.navLinks.forEach(link => {
             link.addEventListener('click', () => {
-                closeMobileMenu();
+                if (state.isMenuOpen) {
+                    toggleMenu();
+                }
             });
         });
 
-        // Close mobile menu when clicking outside
+        // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (elements.nav && elements.nav.classList.contains('active')) {
-                if (!elements.nav.contains(e.target) && !elements.hamburger.contains(e.target)) {
-                    closeMobileMenu();
-                }
+            if (state.isMenuOpen && 
+                !elements.nav.contains(e.target) && 
+                !elements.hamburger.contains(e.target)) {
+                toggleMenu();
             }
         });
 
-        // Discord Copy
-        if (elements.discordCopy) {
-            elements.discordCopy.addEventListener('click', copyDiscord);
-        }
+        // Discord copy
+        elements.discordBtn.addEventListener('click', copyDiscord);
 
-        // Keyboard navigation for hamburger
-        if (elements.hamburger) {
-            elements.hamburger.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleMobileMenu();
+        // Keyboard navigation
+        document.addEventListener('keydown', handleKeyboard);
+
+        // Header scroll effect
+        window.addEventListener('scroll', handleScroll);
+    }
+
+    // ===== Drag Scroll for Watched Section (scrollLeft implementation) =====
+    function setupDragScroll() {
+        const scrollContainers = [elements.seriesScroll, elements.moviesScroll];
+        
+        scrollContainers.forEach(container => {
+            if (!container) return;
+            
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+            let velX = 0;
+            let momentumID;
+            let lastPageX;
+            
+            // Mouse Events
+            container.addEventListener('mousedown', (e) => {
+                isDown = true;
+                container.classList.add('active'); // Adds cursor: grabbing
+                startX = e.pageX - container.offsetLeft;
+                scrollLeft = container.scrollLeft;
+                lastPageX = e.pageX;
+                cancelMomentum();
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                if (isDown) {
+                    isDown = false;
+                    container.classList.remove('active');
+                    beginMomentum();
                 }
             });
-        }
+            
+            container.addEventListener('mouseup', () => {
+                isDown = false;
+                container.classList.remove('active');
+                beginMomentum();
+            });
+            
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                
+                const x = e.pageX - container.offsetLeft;
+                const walk = (x - startX) * 1.5; // Scroll speed multiplier
+                container.scrollLeft = scrollLeft - walk;
+                
+                // Calculate velocity for momentum
+                velX = e.pageX - lastPageX;
+                lastPageX = e.pageX;
+            });
+            
+            // Momentum Logic
+            function beginMomentum() {
+                cancelMomentum();
+                if (Math.abs(velX) > 0.5) {
+                    momentumLoop();
+                }
+            }
+            
+            function cancelMomentum() {
+                cancelAnimationFrame(momentumID);
+            }
+            
+            function momentumLoop() {
+                container.scrollLeft -= velX * 1.5; // Apply velocity
+                velX *= 0.95; // Friction
+                
+                if (Math.abs(velX) > 0.5) {
+                    momentumID = requestAnimationFrame(momentumLoop);
+                }
+            }
+        });
     }
 
-    // ========================================
-    // Mobile Menu Functions
-    // ========================================
-    function toggleMobileMenu() {
-        elements.hamburger.classList.toggle('active');
-        elements.nav.classList.toggle('active');
-        
-        const isExpanded = elements.hamburger.classList.contains('active');
-        elements.hamburger.setAttribute('aria-expanded', isExpanded);
+    // ===== Hamburger Menu =====
+    function toggleMenu() {
+        state.isMenuOpen = !state.isMenuOpen;
+        elements.hamburger.classList.toggle('active', state.isMenuOpen);
+        elements.nav.classList.toggle('active', state.isMenuOpen);
+        elements.hamburger.setAttribute('aria-expanded', state.isMenuOpen);
         
         // Prevent body scroll when menu is open
-        document.body.style.overflow = isExpanded ? 'hidden' : '';
+        document.body.style.overflow = state.isMenuOpen ? 'hidden' : '';
     }
 
-    function closeMobileMenu() {
-        elements.hamburger.classList.remove('active');
-        elements.nav.classList.remove('active');
-        elements.hamburger.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
+    // ===== Smooth Scroll =====
+    function setupSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    const headerOffset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
     }
 
-    // ========================================
-    // Copy Discord Username
-    // ========================================
-    function copyDiscord() {
-        const username = 'fasthate';
-        
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(username)
-                .then(() => showToast('Скопировано: ' + username))
-                .catch(() => fallbackCopy(username));
-        } else {
-            fallbackCopy(username);
-        }
-    }
-
-    function fallbackCopy(text) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        
-        try {
-            document.execCommand('copy');
-            showToast('Скопировано: ' + text);
-        } catch (err) {
-            showToast('Не удалось скопировать');
-        }
-        
-        document.body.removeChild(textarea);
-    }
-
-    // ========================================
-    // Toast Notification
-    // ========================================
-    function showToast(message, duration = 3000) {
-        if (!elements.toast) return;
-        
-        elements.toast.textContent = message;
-        elements.toast.classList.add('show');
-        
-        setTimeout(() => {
-            elements.toast.classList.remove('show');
-        }, duration);
-    }
-
-    // ========================================
-    // Intersection Observer for Animations
-    // ========================================
+    // ===== Intersection Observer for Section Animations =====
     function setupIntersectionObserver() {
-        const observerOptions = {
+        const options = {
             root: null,
-            rootMargin: '-50px',
+            rootMargin: '-20% 0px -20% 0px',
             threshold: 0.1
         };
 
@@ -150,98 +190,91 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
+                    
+                    // Update active nav link
+                    const sectionId = entry.target.id;
+                    updateActiveNavLink(sectionId);
                 }
             });
-        }, observerOptions);
+        }, options);
 
         elements.sections.forEach(section => {
             observer.observe(section);
         });
-
-        // Initially make sections visible if they're in viewport
-        setTimeout(() => {
-            elements.sections.forEach(section => {
-                const rect = section.getBoundingClientRect();
-                if (rect.top < window.innerHeight && rect.bottom > 0) {
-                    section.classList.add('visible');
-                }
-            });
-        }, 100);
     }
 
-    // ========================================
-    // Smooth Scroll for Navigation
-    // ========================================
-    function setupSmoothScroll() {
+    function updateActiveNavLink(sectionId) {
         elements.navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const href = link.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    e.preventDefault();
-                    const target = document.querySelector(href);
-                    if (target) {
-                        const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
-                        const targetPosition = target.offsetTop - headerHeight;
-                        
-                        window.scrollTo({
-                            top: targetPosition,
-                            behavior: 'smooth'
-                        });
-
-                        // Update URL without jumping
-                        history.pushState(null, null, href);
-                    }
-                }
-            });
+            const linkSection = link.dataset.section;
+            link.classList.toggle('active', linkSection === sectionId);
         });
-
-        // Logo click scrolls to main
-        const logo = document.querySelector('.logo');
-        if (logo) {
-            logo.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-        }
     }
 
-    // ========================================
-    // Handle Active Navigation State
-    // ========================================
-    function updateActiveNav() {
-        const scrollPosition = window.scrollY + 100;
-
-        elements.sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.offsetHeight;
-            const sectionId = section.getAttribute('id');
-
-            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                elements.navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${sectionId}`) {
-                        link.classList.add('active');
-                    }
-                });
+    // ===== Discord Copy =====
+    async function copyDiscord() {
+        const discordUsername = 'fasthate';
+        
+        try {
+            await navigator.clipboard.writeText(discordUsername);
+            showToast('Discord скопирован: fasthate');
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = discordUsername;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('Discord скопирован: fasthate');
+            } catch (err) {
+                showToast('Не удалось скопировать');
             }
-        });
+            
+            document.body.removeChild(textArea);
+        }
     }
 
-    // Throttle scroll event
-    let scrollTimeout;
-    window.addEventListener('scroll', () => {
-        if (scrollTimeout) {
-            window.cancelAnimationFrame(scrollTimeout);
-        }
-        scrollTimeout = window.requestAnimationFrame(updateActiveNav);
-    });
+    // ===== Toast Notification =====
+    function showToast(message, duration = 3000) {
+        if (elements.toastMessage) {
+            elements.toastMessage.textContent = message;
+            elements.toast.classList.add('active');
 
-    // ========================================
-    // Initialize on DOM Ready
-    // ========================================
+            setTimeout(() => {
+                elements.toast.classList.remove('active');
+            }, duration);
+        }
+    }
+
+    // ===== Keyboard Navigation =====
+    function handleKeyboard(e) {
+        // Close menu on Escape
+        if (e.key === 'Escape') {
+            if (state.isMenuOpen) {
+                toggleMenu();
+            }
+        }
+    }
+
+    // ===== Scroll Effects =====
+    function handleScroll() {
+        const scrollY = window.scrollY;
+        
+        // Header background opacity
+        if (elements.header) {
+            if (scrollY > 100) {
+                elements.header.style.background = 'rgba(0, 0, 0, 0.95)';
+            } else {
+                elements.header.style.background = 'rgba(0, 0, 0, 0.9)';
+            }
+        }
+    }
+
+    // ===== Initialize when DOM is ready =====
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
