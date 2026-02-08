@@ -1,1 +1,1 @@
-# fasthate.github.io
+# https://fasthate.github.io
