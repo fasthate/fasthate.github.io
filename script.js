@@ -17,12 +17,6 @@
         navLinks: document.querySelectorAll('.nav-link[data-section]'),
         scrollTop: document.getElementById('scrollTop'),
         
-        // Watched section
-        seriesScroll: document.getElementById('seriesScroll'),
-        moviesScroll: document.getElementById('moviesScroll'),
-        filterBtns: document.querySelectorAll('.filter-btn'),
-        watchedCategories: document.querySelectorAll('.watched-category'),
-        
         // Discord & Toast
         discordBtn: document.getElementById('discordBtn'),
         toast: document.getElementById('toast'),
@@ -41,10 +35,8 @@
         setupEventListeners();
         setupIntersectionObserver();
         setupSmoothScroll();
-        setupDragScroll();
         setupProgressBar();
         setupScrollToTop();
-        setupFilter();
     }
 
     // ===== Preloader =====
@@ -153,79 +145,6 @@
 
         // Header scroll effect
         window.addEventListener('scroll', handleScroll);
-    }
-
-    // ===== Drag Scroll for Watched Section =====
-    function setupDragScroll() {
-        const scrollContainers = [elements.seriesScroll, elements.moviesScroll];
-        
-        scrollContainers.forEach(container => {
-            if (!container) return;
-            
-            let isDown = false;
-            let startX;
-            let scrollLeft;
-            let velX = 0;
-            let momentumID;
-            let lastPageX;
-            
-            // Mouse Events
-            container.addEventListener('mousedown', (e) => {
-                isDown = true;
-                container.classList.add('active');
-                startX = e.pageX - container.offsetLeft;
-                scrollLeft = container.scrollLeft;
-                lastPageX = e.pageX;
-                cancelMomentum();
-            });
-            
-            container.addEventListener('mouseleave', () => {
-                if (isDown) {
-                    isDown = false;
-                    container.classList.remove('active');
-                    beginMomentum();
-                }
-            });
-            
-            container.addEventListener('mouseup', () => {
-                isDown = false;
-                container.classList.remove('active');
-                beginMomentum();
-            });
-            
-            container.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                
-                const x = e.pageX - container.offsetLeft;
-                const walk = (x - startX) * 1.5;
-                container.scrollLeft = scrollLeft - walk;
-                
-                velX = e.pageX - lastPageX;
-                lastPageX = e.pageX;
-            });
-            
-            // Momentum Logic
-            function beginMomentum() {
-                cancelMomentum();
-                if (Math.abs(velX) > 0.5) {
-                    momentumLoop();
-                }
-            }
-            
-            function cancelMomentum() {
-                cancelAnimationFrame(momentumID);
-            }
-            
-            function momentumLoop() {
-                container.scrollLeft -= velX * 1.5;
-                velX *= 0.95;
-                
-                if (Math.abs(velX) > 0.5) {
-                    momentumID = requestAnimationFrame(momentumLoop);
-                }
-            }
-        });
     }
 
     // ===== Hamburger Menu =====
