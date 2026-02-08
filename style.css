@@ -247,14 +247,20 @@ ul {
 .background-overlay {
     position: absolute;
     inset: 0;
-    /* ИЗМЕНИТЬ ФОН ЗДЕСЬ: Замените ссылку внутри url('') на свою */
-    background-image: url('https://imgur.com/RZvEJXz.png');
+    background-image: url('https://imgur.com/IfTREFr');
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-    filter: grayscale(100%) brightness(0.25) blur(8px);
+    background-attachment: fixed;
+    filter: grayscale(100%) brightness(0.3);
     transform: scale(1.1);
     z-index: -1;
+}
+
+@media (max-width: 768px) {
+    .background-overlay {
+        background-attachment: scroll;
+        filter: grayscale(100%) brightness(0.4);
+    }
 }
 
 .background-overlay::after {
@@ -697,6 +703,105 @@ ul {
     }
 }
 
+/* Улучшенные breakpoints */
+@media (max-width: 1024px) {
+    .social-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --header-height: 60px;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .main-avatar {
+        width: 120px;
+        height: 120px;
+    }
+
+    .main-title {
+        font-size: 3rem;
+        letter-spacing: 0.1em;
+    }
+
+    .group-title {
+        font-size: 1.2rem;
+    }
+
+    .social-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        max-width: 100%;
+    }
+
+    .social-link {
+        padding: 1rem 0.5rem;
+    }
+
+    .social-link span {
+        font-size: 0.75rem;
+    }
+
+    .about-text p {
+        font-size: 1rem;
+    }
+
+    .about-info {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .info-item {
+        padding: 1.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 2.5rem;
+    }
+
+    .main-avatar {
+        width: 100px;
+        height: 100px;
+    }
+
+    .social-grid {
+        gap: 0.75rem;
+    }
+
+    .social-link svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .social-link span {
+        font-size: 0.65rem;
+    }
+
+    .group-title {
+        font-size: 1rem;
+    }
+
+    .scroll-top {
+        width: 45px;
+        height: 45px;
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .scroll-top svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
 /* ===== Accessibility ===== */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -739,4 +844,12 @@ ul {
 ::selection {
     background: var(--color-white);
     color: var(--color-black);
+}
+
+.social-link,
+.nav-link,
+button,
+.hamburger {
+    min-height: 44px;
+    touch-action: manipulation;
 }
