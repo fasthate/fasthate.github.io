@@ -31,35 +31,10 @@
 
     // ===== Initialize =====
     function init() {
-        setupPreloader();
         setupEventListeners();
         setupIntersectionObserver();
         setupSmoothScroll();
-        setupProgressBar();
         setupScrollToTop();
-    }
-
-    // ===== Preloader =====
-    function setupPreloader() {
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (elements.preloader) {
-                    elements.preloader.classList.add('hidden');
-                }
-            }, 500);
-        });
-    }
-
-    // ===== Progress Bar =====
-    function setupProgressBar() {
-        window.addEventListener('scroll', () => {
-            if (elements.progressBar) {
-                const scrollTop = window.scrollY;
-                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-                const scrollPercent = (scrollTop / docHeight) * 100;
-                elements.progressBar.style.width = scrollPercent + '%';
-            }
-        });
     }
 
     // ===== Scroll to Top Button =====
