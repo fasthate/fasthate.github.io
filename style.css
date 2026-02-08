@@ -242,6 +242,7 @@ ul {
 .background-overlay {
     position: absolute;
     inset: 0;
+    /* ИЗМЕНИТЬ ФОН ЗДЕСЬ: Замените ссылку внутри url('') на свою */
     background-image: url('https://i.postimg.cc/s2M6DJHL/image.png');
     background-size: cover;
     background-position: center;
@@ -299,8 +300,20 @@ ul {
     font-weight: 900;
     text-transform: lowercase;
     letter-spacing: 0.15em;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.group-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-gray-400);
+    margin: 1.5rem 0 0.75rem;
+    text-align: center;
+    width: 100%;
 }
 
 /* Social Grid */
@@ -348,7 +361,7 @@ ul {
 /* Scroll Indicator */
 .scroll-indicator {
     position: absolute;
-    bottom: 2rem;
+    bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -466,9 +479,16 @@ ul {
 
 .watched-scroll {
     position: relative;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     cursor: grab;
     padding: 1rem 0;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.watched-scroll::-webkit-scrollbar {
+    display: none;
 }
 
 .watched-scroll:active {
@@ -479,8 +499,7 @@ ul {
     display: flex;
     gap: 1.5rem;
     padding: 0.5rem;
-    transition: transform 0.1s ease-out;
-    will-change: transform;
+    width: max-content;
 }
 
 .watched-card {
@@ -713,25 +732,7 @@ ul {
     background: var(--color-gray-600);
 }
 
-/* Hide scrollbar for watched section */
-.watched-scroll::-webkit-scrollbar {
-    display: none;
-}
 
-.watched-scroll {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    overflow-x: auto; /* Enable native scrolling */
-    scroll-behavior: auto; /* Disable smooth scroll during drag */
-}
-
-/* Ensure track doesn't use transform for layout, just flex */
-.watched-track {
-    display: flex;
-    gap: 1.5rem;
-    padding: 0.5rem;
-    width: max-content; /* Ensure it takes full width of content */
-}
 
 /* ===== Selection ===== */
 ::selection {

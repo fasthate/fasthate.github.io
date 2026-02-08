@@ -41,7 +41,9 @@
     // ===== Event Listeners =====
     function setupEventListeners() {
         // Hamburger menu
-        elements.hamburger.addEventListener('click', toggleMenu);
+        if (elements.hamburger) {
+            elements.hamburger.addEventListener('click', toggleMenu);
+        }
 
         // Close menu when clicking nav links
         elements.navLinks.forEach(link => {
@@ -55,14 +57,16 @@
         // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             if (state.isMenuOpen && 
-                !elements.nav.contains(e.target) && 
-                !elements.hamburger.contains(e.target)) {
+                elements.nav && !elements.nav.contains(e.target) && 
+                elements.hamburger && !elements.hamburger.contains(e.target)) {
                 toggleMenu();
             }
         });
 
         // Discord copy
-        elements.discordBtn.addEventListener('click', copyDiscord);
+        if (elements.discordBtn) {
+            elements.discordBtn.addEventListener('click', copyDiscord);
+        }
 
         // Keyboard navigation
         document.addEventListener('keydown', handleKeyboard);
@@ -147,6 +151,8 @@
 
     // ===== Hamburger Menu =====
     function toggleMenu() {
+        if (!elements.hamburger || !elements.nav) return;
+        
         state.isMenuOpen = !state.isMenuOpen;
         elements.hamburger.classList.toggle('active', state.isMenuOpen);
         elements.nav.classList.toggle('active', state.isMenuOpen);
