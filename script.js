@@ -8,15 +8,20 @@
 
     // ===== DOM Elements =====
     const elements = {
+        preloader: document.getElementById('preloader'),
+        progressBar: document.getElementById('progressBar'),
         header: document.getElementById('header'),
         hamburger: document.getElementById('hamburger'),
         nav: document.getElementById('nav'),
         sections: document.querySelectorAll('.section'),
         navLinks: document.querySelectorAll('.nav-link[data-section]'),
+        scrollTop: document.getElementById('scrollTop'),
         
-        // Watched scroll containers
+        // Watched section
         seriesScroll: document.getElementById('seriesScroll'),
         moviesScroll: document.getElementById('moviesScroll'),
+        filterBtns: document.querySelectorAll('.filter-btn'),
+        watchedCategories: document.querySelectorAll('.watched-category'),
         
         // Discord & Toast
         discordBtn: document.getElementById('discordBtn'),
@@ -32,10 +37,85 @@
 
     // ===== Initialize =====
     function init() {
+        setupPreloader();
         setupEventListeners();
         setupIntersectionObserver();
         setupSmoothScroll();
         setupDragScroll();
+        setupProgressBar();
+        setupScrollToTop();
+        setupFilter();
+    }
+
+    // ===== Preloader =====
+    function setupPreloader() {
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (elements.preloader) {
+                    elements.preloader.classList.add('hidden');
+                }
+            }, 500);
+        });
+    }
+
+    // ===== Progress Bar =====
+    function setupProgressBar() {
+        window.addEventListener('scroll', () => {
+            if (elements.progressBar) {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = (scrollTop / docHeight) * 100;
+                elements.progressBar.style.width = scrollPercent + '%';
+            }
+        });
+    }
+
+    // ===== Scroll to Top Button =====
+    function setupScrollToTop() {
+        window.addEventListener('scroll', () => {
+            if (elements.scrollTop) {
+                if (window.scrollY > 500) {
+                    elements.scrollTop.classList.add('visible');
+                } else {
+                    elements.scrollTop.classList.remove('visible');
+                }
+            }
+        });
+
+        if (elements.scrollTop) {
+            elements.scrollTop.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+
+    // ===== Filter Buttons =====
+    function setupFilter() {
+        elements.filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+
+                // Update active button
+                elements.filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Show/hide categories
+                elements.watchedCategories.forEach(category => {
+                    const categoryType = category.dataset.category;
+                    
+                    if (filter === 'all') {
+                        category.classList.remove('hidden');
+                    } else if (categoryType === filter) {
+                        category.classList.remove('hidden');
+                    } else {
+                        category.classList.add('hidden');
+                    }
+                });
+            });
+        });
     }
 
     // ===== Event Listeners =====
@@ -75,7 +155,7 @@
         window.addEventListener('scroll', handleScroll);
     }
 
-    // ===== Drag Scroll for Watched Section (scrollLeft implementation) =====
+    // ===== Drag Scroll for Watched Section =====
     function setupDragScroll() {
         const scrollContainers = [elements.seriesScroll, elements.moviesScroll];
         
@@ -92,7 +172,7 @@
             // Mouse Events
             container.addEventListener('mousedown', (e) => {
                 isDown = true;
-                container.classList.add('active'); // Adds cursor: grabbing
+                container.classList.add('active');
                 startX = e.pageX - container.offsetLeft;
                 scrollLeft = container.scrollLeft;
                 lastPageX = e.pageX;
@@ -118,10 +198,9 @@
                 e.preventDefault();
                 
                 const x = e.pageX - container.offsetLeft;
-                const walk = (x - startX) * 1.5; // Scroll speed multiplier
+                const walk = (x - startX) * 1.5;
                 container.scrollLeft = scrollLeft - walk;
                 
-                // Calculate velocity for momentum
                 velX = e.pageX - lastPageX;
                 lastPageX = e.pageX;
             });
@@ -139,8 +218,8 @@
             }
             
             function momentumLoop() {
-                container.scrollLeft -= velX * 1.5; // Apply velocity
-                velX *= 0.95; // Friction
+                container.scrollLeft -= velX * 1.5;
+                velX *= 0.95;
                 
                 if (Math.abs(velX) > 0.5) {
                     momentumID = requestAnimationFrame(momentumLoop);
@@ -158,7 +237,6 @@
         elements.nav.classList.toggle('active', state.isMenuOpen);
         elements.hamburger.setAttribute('aria-expanded', state.isMenuOpen);
         
-        // Prevent body scroll when menu is open
         document.body.style.overflow = state.isMenuOpen ? 'hidden' : '';
     }
 
@@ -197,7 +275,6 @@
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                     
-                    // Update active nav link
                     const sectionId = entry.target.id;
                     updateActiveNavLink(sectionId);
                 }
@@ -224,7 +301,6 @@
             await navigator.clipboard.writeText(discordUsername);
             showToast('Discord скопирован: fasthate');
         } catch (err) {
-            // Fallback for older browsers
             const textArea = document.createElement('textarea');
             textArea.value = discordUsername;
             textArea.style.position = 'fixed';
@@ -246,7 +322,7 @@
 
     // ===== Toast Notification =====
     function showToast(message, duration = 3000) {
-        if (elements.toastMessage) {
+        if (elements.toast && elements.toastMessage) {
             elements.toastMessage.textContent = message;
             elements.toast.classList.add('active');
 
@@ -258,7 +334,6 @@
 
     // ===== Keyboard Navigation =====
     function handleKeyboard(e) {
-        // Close menu on Escape
         if (e.key === 'Escape') {
             if (state.isMenuOpen) {
                 toggleMenu();
@@ -270,7 +345,6 @@
     function handleScroll() {
         const scrollY = window.scrollY;
         
-        // Header background opacity
         if (elements.header) {
             if (scrollY > 100) {
                 elements.header.style.background = 'rgba(0, 0, 0, 0.95)';
